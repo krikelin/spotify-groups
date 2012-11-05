@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>	
+	<head>
+		<title></title>
+		<link rel="stylesheet" href="sp://resources/css/adam.css" type="text/css" />
+		<link rel="stylesheet" href="sp://resources/css/api.css" type="text/css" />
+		<link rel="stylesheet" href="sp://resources/css/shared.css" type="text/css" />
+		<link rel="stylesheet" href="css/style.css" type="text/css" />
+		<script src="js/jquery-1.8.2.min.js" type="text/JavaScript"></script>
+		<script type="text/JavaScript">
+			var sp = getSpotifyApi(1);
+			var auth = sp.require("$api/auth");
+			var models = sp.require("$api/models");
+			var views = sp.require("$api/views");
+			var krikelin = sp.require("js/krikelin");
+			var access_token = localStorage.fb_access_token;
+			var ttl = localStorage.fb_ttl;
+			var checker = null;
+			/*auth.openGraph = function(access_token, edge, node, parameters) {
+				var url = "http://graph.facebook.com/" + edge + "/?fields=" + node + "
+			};*/
+			function load () {
+				models.Playlist.fromURI("spotify:user:drsounds:playlist:3LJt9HbNTP7gKFeUvuzJfb", function (playlist) {
+					console.log(playlist);
+					playlist.followed = true;
+				});
+				try {
+					var args = models.application.arguments;
+					var valid = new Date().getTime() < new Date().getTime() + localStorage.fb_ttl;
+					console.log(valid);
+					if(!access_token || !valid) {
+						setSection("offline");
+						return;
+					}
+					
+					if (args.length < 1) {
+						setSection("groups");
+						$.getJSON("https://graph.facebook.com/me/groups?access_token=" + access_token, function (data) {
+							for(var i = 0; i < data.data.length; i++) {
+								console.log("A");
+								var group = data.data[i];
+								var v_group = new krikelin.Group(group);
+								$("#grouplist").append(v_group.node);
+							}
+						});
+						return;
+					}
+					
+					
+					$("#feed").html("");
+					var url = "https://graph.facebook.com/" + args[0] + "/?fields=link,feed.fields(message,type,from,source,status_type,application,actions,link)&access_token=" + access_token;
+					console.log(url);
+					//$.getJSON("https://graph.facebook.com/" + args[0], function (data) {
+						var image = new Image("", false, "");
+						image.classList.add("sp-image");
+						image.setAttribute("src", "img/img.png");
+						document.getElementById("image").innerHTML = "";
+						document.getElementById("image").appendChild(image);
+						image.style.width = "128px";
+						image.style.height = "128px";
+						alert("AQ");
+						
+					//});
+					
+					 
+					setSection("overview");
+					
+					$.getJSON(url, function (data) {
+						var items = [];
+						checker = setInterval(function () {
+							console.log("checker");
+							if(items.length == data.feed.data.length-1) {
+								clearInterval(checker);
+								for(var i = 0; i < items.length; i++) {
+									var item = items[i];
+									if(typeof(item) !== "Artist") {
+										console.log("Item", item);
+										var view_entry = new krikelin.Entry(item.item, item.data.name, false);
+										var view_post = new krikelin.Post(view_entry, item.data);
+										$("#feed").append(view_post.node);
+									}
+								}
+							}
+						}, 100);
+										
+						console.log(data);
+						
+						$.each(data.feed.data, function(key, val) {
+							
+							var msg = val.message;
+							var exdata = {
+								name : "A",
+								message: msg,
+								user : {
+									name: val.from.name,
+									id: val.from.id,
+									image: "http://profile.ak.fbcdn.net/hprofile-ak-ash3/574023_1718220971_646609709_n.jpg"
+								}
+							};
+							console.log(val);
+							
+							if(msg.indexOf("open.spotify.com") !== -1) {
+								console.log(msg);
+								if(msg.indexOf("open.spotify.com/artist") !== -1) {
+									var c = msg.indexOf("open.spotify.com/track");
+									var d = msg.length
+									var uri = msg.substring(c, d);
+									
+									uri = uri.replace("http://open.spotify.com/", "spotify:");
+									uri = uri.replace("/", ":");
+									console.log(uri);
+									models.Artist.fromURI(uri, function (artist) {
+										console.log("TRACK");
+										console.log("artist", artist);
+										items.push({item: artist, data: exdata});
+										
+									});
+								}
+							
+								if(msg.indexOf("open.spotify.com/user") !== -1) {
+									var c = msg.indexOf("open.spotify.com/user");
+									var d = msg.length;
+									var uri = msg.substring(c, d);
+									console.log(uri);
+									uri = uri.replace(/\//g, ":");
+									uri = uri.replace("open.spotify.com:", "spotify:");
+									
+									var playlist = new models.Playlist();
+									models.Playlist.fromURI(uri, function (playlist) {
+										try {
+											console.log("TRACK");
+											
+											items.push({item: playlist, data: exdata});
+											
+										
+										} catch (e) {
+											console.log(e.stack);
+										}
+									});
+								}
+								if(msg.indexOf("open.spotify.com/album") !== -1) {
+									var c = msg.indexOf("open.spotify.com/album");
+									var d = msg.length;
+									var uri = msg.substring(c, d);
+									console.log(uri);
+									
+									uri = uri.replace(/\//g, ":");
+									uri = uri.replace("open.spotify.com:", "spotify:");
+									
+									console.log(uri);                     
+									models.Album.fromURI(uri, function (album) {
+										try {
+											console.log("TRACK");
+											console.log("Album", album);
+											items.push({item: album, data: exdata});
+											
+										} catch (e) {
+											console.log(e.stack);
+										}
+									});
+								}
+							}
+						});
+					});
+					
+				} catch (e) {
+					console.log(e.stack);
+				}
+			}
+			function init () {
+				
+				
+				models.application.observe(models.EVENT.ARGUMENTSCHANGED, function () {
+					load();
+				});
+				load();
+				
+				
+			}
+			function setSection(id) {
+				var sections = document.getElementsByTagName("section");
+				for(var i = 0; i < sections.length; i++) {
+					var section = sections[i];
+					
+					if(section.getAttribute("id") === id) {
+						section.style.display = "block";
+					} else {
+						section.style.display = "none";
+					}
+				}
+			}
+			function authenticate () {
+				auth.authenticateWithFacebook('471674609522166', ['user_about_me', 'user_groups'],
+				{
+					onSuccess: function(_access_token, ttl) {
+						access_token = _access_token;
+						localStorage.fb_access_token = access_token;
+						localStorage.fb_ttl = ttl;
+						load();
+					},
+					
+					onFailure: function(error) {
+						console.log('Authentication failed with error: ' + error);
+					},
+					onComplete: function() {
+						
+					}
+				})
+			}
+		</script>
+	</head>
+	<body onload="init()">
+		<section id="offline">
+			<div class="overbox">
+				<p><input type="checkbox" style="float: left" />I understand that when I log into my Leros account below, Leros will be able to associate information about my Spotify use, such as library and listening history, with my Leros account. Leros’s collection and use of this information will be governed by the Leros Privacy Policy.</p>
+				<a href="#" onclick="authenticate()"><img src="img/login-facebook.png" /></a>
+			</div>
+		</section>
+		<section id="overview">
+			<div class="header">
+				<table width="100%">
+					<tr>
+						<td valign="top" id="image">
+							
+						</td>
+						<td valign="top">
+							<div class="post">
+								<label for="name">Post a track, album, playlist to this group</label>
+								<input type="text" class="input" id="content" placeholder="Drop artist/album/playlist here" />
+							</div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<divider>
+				<h2>Feed</h2>
+			</divider>
+			<div id="feed">
+			</div>
+		</section>
+		<section id="groups">
+			<div class="header">
+				<table width="100%">
+					<tr>
+						<td valign="top" id="image">
+							
+						</td>
+						<td valign="top">
+						</td>
+					</tr>
+				</table>
+			</div>
+			<divider>
+				<h2>My Groups</h2>
+			</divider>
+			<ul class="flow" id="grouplist">
+			</ul>
+		</section>
+	</body>
+</html>

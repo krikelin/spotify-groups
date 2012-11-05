@@ -1,0 +1,28 @@
+{
+	"AppName":{
+		"en":"Group"
+	},
+	"AppDescription":{
+		"en":"Group"
+	},
+	"SupportedLanguages":[
+		"en"
+	],
+	"ApiPermissions": { 
+		"core": ["private"],
+		"playlist":["private"],
+		"social":["private"],
+		"bridge":["private"],
+		"desktop":["private"]
+	},
+	"BundleIdentifier":"group",
+	"BundleType":"Application",
+	"RequiredPermissions":[
+		"https://graph.facebook.com",
+		"http://static.ak.fbcdn.net"
+	],
+	"Dependencies":{
+		"api":"0.1.0",
+		"resources":"0.1.0"
+	}
+}
