@@ -8,9 +8,31 @@
 		<link rel="stylesheet" href="css/style.css" type="text/css" />
 		<script src="js/jquery-1.8.2.min.js" type="text/JavaScript"></script>
 		<script type="text/JavaScript">
-			var sp = getSpotifyApi(1);
+            var sp =  getSpotifyApi(1);
+            var models = sp.require("$api/models");
+            models.Album.fromURI("spotify:album:1MdlJ3kJEmf98aafdP2xv9", function (album) {
+				try {
+					console.log("TRACK", album instanceof models.Album);
+					console.log("Album", album);
+                    var item = {item: album, data: exdata};
+                    console.log("KAFKA", typeof(album), typeof(item.item), typeof(album) == item.item); 
+					items.push();
+					
+				} catch (e) {
+					console.log(e.stack);
+				}
+			});
+            String.prototype.template = function (obj) {
+                var output = this;                
+                for (var k in obj) {
+                    output = output.replace("${" + k + "}", obj[k]);
+                }
+                return output;
+            };
+            console.log("{{test}}".template({ test: "Hello World"}));
+			
 			var auth = sp.require("$api/auth");
-			var models = sp.require("$api/models");
+			
 			var views = sp.require("$api/views");
 			var krikelin = sp.require("js/krikelin");
 			var access_token = localStorage.fb_access_token;
@@ -50,17 +72,19 @@
 					$("#feed").html("");
 					var url = "https://graph.facebook.com/" + args[0] + "/?fields=link,feed.fields(message,type,from,source,status_type,application,actions,link)&access_token=" + access_token;
 					console.log(url);
-					//$.getJSON("https://graph.facebook.com/" + args[0], function (data) {
+					$.getJSON("https://graph.facebook.com/" + args[0], function (data) {
+                        console.log("TTD", data);
 						var image = new Image("", false, "");
 						image.classList.add("sp-image");
-						image.setAttribute("src", "img/img.png");
+						image.setAttribute("src", data.icon);
 						document.getElementById("image").innerHTML = "";
 						document.getElementById("image").appendChild(image);
 						image.style.width = "128px";
 						image.style.height = "128px";
 						alert("AQ");
-						
-					//});
+						var info = document.querySelector("#info");
+                            info.innerHTML = info.innerHTML.template(data);
+					});
 					
 					 
 					setSection("overview");
@@ -69,24 +93,25 @@
 						var items = [];
 						checker = setInterval(function () {
 							console.log("checker");
+                            var models = sp.require("$api/models");
 							if(items.length == data.feed.data.length-1) {
+                                console.log("F");
 								clearInterval(checker);
 								for(var i = 0; i < items.length; i++) {
 									var item = items[i];
 									if(typeof(item) !== "Artist") {
-										console.log("Item", item);
-										var view_entry = new krikelin.Entry(item.item, item.data.name, false);
-										var view_post = new krikelin.Post(view_entry, item.data);
-										$("#feed").append(view_post.node);
+                                       
+										
+                                        
 									}
 								}
 							}
-						}, 100);
+						}, 1000);
 										
 						console.log(data);
 						
 						$.each(data.feed.data, function(key, val) {
-							
+							     
 							var msg = val.message;
 							var exdata = {
 								name : "A",
@@ -97,7 +122,8 @@
 									image: "http://profile.ak.fbcdn.net/hprofile-ak-ash3/574023_1718220971_646609709_n.jpg"
 								}
 							};
-							console.log(val);
+                            
+   							console.log(val);
 							
 							if(msg.indexOf("open.spotify.com") !== -1) {
 								console.log(msg);
@@ -112,7 +138,7 @@
 									models.Artist.fromURI(uri, function (artist) {
 										console.log("TRACK");
 										console.log("artist", artist);
-										items.push({item: artist, data: exdata});
+										appendItem(artist, exdata);
 										
 									});
 								}
@@ -130,7 +156,7 @@
 										try {
 											console.log("TRACK");
 											
-											items.push({item: playlist, data: exdata});
+											appendItem(playlist, exdata);
 											
 										
 										} catch (e) {
@@ -150,9 +176,11 @@
 									console.log(uri);                     
 									models.Album.fromURI(uri, function (album) {
 										try {
-											console.log("TRACK");
+											console.log("TRACK", album instanceof models.Album);
 											console.log("Album", album);
-											items.push({item: album, data: exdata});
+                                            var item = {item: album, data: exdata};
+                                            console.log("KAFKA", typeof(album), typeof(item.item), item.item instanceof models.Album); 
+											appendItem(item.item, item.data);
 											
 										} catch (e) {
 											console.log(e.stack);
@@ -167,6 +195,17 @@
 					console.log(e.stack);
 				}
 			}
+            function appendItem(item, data) {
+                console.log("Item", item);
+                console.log("DS", item);
+                console.log("DS", item instanceof models.Album);
+               
+			    var view_entry = new krikelin.Entry(item, data.name, false);
+
+			    var view_post = new krikelin.Post(view_entry, data);
+		    	$("#feed").append(view_post.node);
+            }
+
 			function init () {
 				
 				
@@ -217,17 +256,19 @@
 			</div>
 		</section>
 		<section id="overview">
-			<div class="header">
-				<table width="100%">
+			<div class="header" style="padding-bottom:12px">
+				<table width="100%" cellspacing="3" >
 					<tr>
-						<td valign="top" id="image">
+						<td valign="top" width="128px" id="image">
 							
 						</td>
-						<td valign="top">
-							<div class="post">
+						<td id="info" valign="top">
+                            <h1><a id="ct" href="#">${name}</a></h1>
+                            <p>
+							<!--<div class="post">
 								<label for="name">Post a track, album, playlist to this group</label>
 								<input type="text" class="input" id="content" placeholder="Drop artist/album/playlist here" />
-							</div>
+							</div>-->
 						</td>
 					</tr>
 				</table>

@@ -1,6 +1,7 @@
 var sp = getSpotifyApi(1);
-var models = sp.require("sp://import/scripts/api/models");
-var views = sp.require("sp://import/scripts/api/views");
+var models = sp.require("$api/models");
+var views = sp.require("$api/views");
+
 /***
 @module krikelin
 
@@ -136,7 +137,7 @@ exports.Post = function(post, data) {
 @implements View
 **/
 exports.Entry = function (album, _album, light, mode) {
-	if(typeof(mode) === "undefined") {
+   if(typeof(mode) === "undefined") {
 		mode = 0;
 	}
 	if(typeof(light) == "undefined") {
@@ -149,8 +150,11 @@ exports.Entry = function (album, _album, light, mode) {
 	table.style.width = "100%";
 	
 	var player = new views.Player(album);
-	player.context = album;
-	player.data = album.get(0);
+console.log("ALBUM", album);
+
+	    player.context = album;
+        
+	    player.data = album.get(0);
 	
 	var cdiv = document.createElement("td");
 
@@ -160,8 +164,9 @@ exports.Entry = function (album, _album, light, mode) {
 	div.appendChild(cdiv);
 //	cdiv.innerHTML += "<br /><button class=\"add-playlist icon button icon\"><span class=\"plus\"></span>Add as playlist</button>";
 	//cdiv.innerHTML += "<br /><button class=\"add-playlist icon button icon\"><span class=\"share\"></span>Share me</button>";
-	
+	console.log("FIRSTTRACK", album.get(0));
 	var list = new views.List(album, function(track) {
+     console.log("TRACK", track);
 		return new views.Track(track, views.Track.FIELD.STAR | views.Track.FIELD.NAME | views.Track.FIELD.ARTIST |  views.Track.FIELD.DURATION | views.Track.FIELD.ALBUM |   views.Track.FIELD.SHARE);
 	});
 	list.node.style.width = "100%";
