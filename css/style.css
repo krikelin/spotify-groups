@@ -13,6 +13,14 @@ input, label{
 a {
 	color: #FFFFFF;
 }
+.entry {
+	box-sizing: border-box;
+	padding: 0px;
+	padding-top: 12px;
+}
+.entry:nth-child(2n) {
+	
+}
 body {
 	min-height: 100%;
 }
@@ -32,6 +40,17 @@ body {
 		top: 0;
 		width: 100%;
 }
+.by, .by a {
+	color: #888888;
+}
+td {
+	padding: 12px;
+	padding-right: 0px;
+}
+header td, h3 {
+	padding-right: 12px;
+	box-sizing: border-box;
+}
 img {
 	border: none !important;
 }
@@ -39,8 +58,8 @@ img {
 	background: #222222;
 	border: none;
 	-webkit-user-drag: none;
-	box-shadow:inset 0px 12px 13px #aaaaaa, 0px 1px 12px #000000;
-	border-radius:5px;
+	box-shadow: 0px 0px 6px #222222;
+	border-radius: 3px;
 }
 .flow li {
 	float: left;
@@ -53,9 +72,9 @@ section {
 }
 hr {
 	border: none;
-	border-top: 1px solid #111111;
+	/*border-top: 1px solid #111111;
 	border-bottom: 1px solid #555555;
-	margin-top:12px;
+	margin-top:12px;*/
 }
 divider h2 {
 	top: 0px;
@@ -74,5 +93,3 @@ divider h2 {
 	height: 16px;
 
 }
-.overbox {
-	h

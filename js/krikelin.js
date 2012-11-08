@@ -1,6 +1,6 @@
 var sp = getSpotifyApi(1);
-var models = sp.require("sp://import/scripts/api/models");
-var views = sp.require("sp://import/scripts/api/views");
+var models = sp.require("$api/models");
+var views = sp.require("$api/views");
 /***
 @module krikelin
 
@@ -88,7 +88,7 @@ exports.Artist = function (artist) {
 };
 exports.Group = function(group) {
 	var picture = new Image("img/header.png", "spotify:app:group:" + group.id, group.name);
-	picture.setAttribute("src", "img/img.png");
+	picture.setAttribute("src", "img/fb_user.gif");
 	console.log(picture);
 	picture.style.width = "128px";
 	picture.style.height = "128px";
@@ -107,7 +107,7 @@ exports.Group = function(group) {
 exports.Post = function(post, data) {
 	try {
 		this.node = document.createElement("div");
-		this.node.style.marginTop = "10px";
+		this.node.classList.add("entry");
 		
 		var div2 = document.createElement("div");
 		div2.style.marginLeft = "10px";
@@ -122,9 +122,11 @@ exports.Post = function(post, data) {
 		var span = document.createElement("span");
 		span.innerHTML = "<b style=\"color: #FFFFFF\">" + data.user.name + "</b><p>" + data.message.substring(0, data.message.indexOf("http://open.spotify.com")) + "</p>" ;
 		div2.appendChild(span);
-		image.style.width = "24px";
-		image.style.height = "24px";
+		image.style.width = "32px";
+		image.style.height = "32px";
 		this.node.appendChild(div2);
+		post.node.style.paddingLeft = "48px";
+	
 		this.node.appendChild(post.node);
 		this.node.appendChild(document.createElement("hr"));
 	} catch (e) {
@@ -169,9 +171,18 @@ exports.Entry = function (album, _album, light, mode) {
 		list.node.classList.add("sp-light");
 	table.setAttribute("class", "post");
 	var div2 = document.createElement("td");
+	console.log("DTDTF", album);
+	var userfield = (typeof(album.data.owner) !== "undefined") ? " <span class=\"by\">by <a href=\"" + album.data.owner.uri + "\">" + album.data.owner.name + "</a>" : "</span>";
 
-	div2.innerHTML = "<h3><a href=\"" + album.data.uri + "\">" + album.name.decodeForText() + "</a> </p>";
-	
+	var subscribeHTML = "";
+	if(album instanceof models.Playlist) {
+		subscribeHTML += "<span> {{0}} subscribers </span>".replace("{{0}}", album.data.subscriberCount);
+		if(!album.data.subscribed)
+			subscribeHTML += "<button class=\"button\"> + Subscribe</button>";	
+	}
+
+	div2.innerHTML = "<h3 style=\"width: 100%\"><a href=\"" + album.data.uri + "\">" + album.name.decodeForText().substring(0, 35) + "</a> " +  userfield + " <span style=\"float: right\">" + subscribeHTML + "</span></h3>";
+
 	
 	div.appendChild(div2);
 	var tr2 = document.createElement("tr");

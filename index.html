@@ -58,7 +58,7 @@
 						document.getElementById("image").appendChild(image);
 						image.style.width = "128px";
 						image.style.height = "128px";
-						alert("AQ");
+						
 						
 					//});
 					
@@ -67,12 +67,16 @@
 					
 					$.getJSON(url, function (data) {
 						var items = [];
+						var start = false;
 						checker = setInterval(function () {
 							console.log("checker");
-							if(items.length == data.feed.data.length-1) {
-								clearInterval(checker);
-								for(var i = 0; i < items.length; i++) {
-									var item = items[i];
+							console.log("Afgf", items.length, data.feed.data.length);
+							if(items.length == data.feed.data.length -1)
+								console.log("CT");
+								start = true;
+								
+								if(start && items.length > 0) {
+									var item = items.shift();
 									if(typeof(item) !== "Artist") {
 										console.log("Item", item);
 										var view_entry = new krikelin.Entry(item.item, item.data.name, false);
@@ -80,8 +84,7 @@
 										$("#feed").append(view_post.node);
 									}
 								}
-							}
-						}, 100);
+						}, 1000);
 										
 						console.log(data);
 						
@@ -220,18 +223,22 @@
 			<div class="header">
 				<table width="100%">
 					<tr>
-						<td valign="top" id="image">
+						<td width="128px" valign="top" id="image">
 							
 						</td>
 						<td valign="top">
-							<div class="post">
+							<h1><a href="#">${group.title}</a></h1>
+							<!--<div class="post">
 								<label for="name">Post a track, album, playlist to this group</label>
 								<input type="text" class="input" id="content" placeholder="Drop artist/album/playlist here" />
-							</div>
+							</div>--->
+						</td>
+						<td class="header" valign="top">
+							<button style="float: right" class="button"><span class="add"></span>Join group</button>
 						</td>
 					</tr>
 				</table>
-			</div>
+			</div><br />
 			<divider>
 				<h2>Feed</h2>
 			</divider>
@@ -258,3 +265,4 @@
 		</section>
 	</body>
 </html>
+
